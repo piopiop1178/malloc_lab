@@ -1,4 +1,4 @@
-//seg_llist ÌõÑÏûÖ ÏÑ†Ï∂ú Î∞©Ïãù
+//seg_llist best_fit πÊΩƒ
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,42 +11,34 @@
 
 team_t team = {
     /* Team name */
-    "Kangsan",
+    "JUNGLE",
     /* First member's full name */
-    "Kangsan Kim",
+    "kangsan",
     /* First member's email address */
-    "kkk",
+    "piopiop1178@gmail.com",
     /* Second member's full name (leave blank if none) */
     "",
     /* Second member's email address (leave blank if none) */
     ""
 };
 
-#define ALIGNMENT 8
-
 #define WSIZE 4
 #define DSIZE 8
 #define CHUNKSIZE (1<<12) 
-
 #define MAX(x, y) ((x) > (y)? (x) : (y))
-
 #define PACK(size, alloc) ((size) | (alloc)) 
-
 #define GET(p)          (*(unsigned int *)(p)) 
 #define PUT(p, val)     (*(unsigned int *)(p) = (val))  
-
 #define GET_SIZE(p)     (GET(p) & ~0x7) 
 #define GET_ALLOC(p)    (GET(p) & 0x1)
-
 #define HDRP(bp)        ((char *)(bp) - WSIZE) // 
 #define FTRP(bp)        ((char *)(bp) + GET_SIZE(HDRP(bp)) - DSIZE) 
-
 #define PRED(bp)        ((char *)(bp))
 #define SUCC(bp)        ((char *)(bp) + WSIZE)
 
 #define NEXT_BLKP(bp)   ((char *)(bp) + GET_SIZE(((char *)(bp) - WSIZE))) 
 #define PREV_BLKP(bp)   ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE))) 
-//Î∏îÎ°ù ÏµúÏÜå ÌÅ¨Í∏∞Ïù∏ 2**4Î∂ÄÌÑ∞ ÏµúÎåÄ ÌÅ¨Í∏∞Ïù∏ 2**32Î•º ÏúÑÌïú Î¶¨Ïä§Ìä∏
+//∫Ì∑œ √÷º“ ≈©±‚¿Œ 2**4∫Œ≈Õ √÷¥Î ≈©±‚¿Œ 2**32∏¶ ¿ß«— ∏ÆΩ∫∆Æ 29∞≥
 #define LIST_NUM 29
 
 static void *extend_heap(size_t words);
@@ -61,10 +53,12 @@ void add_free_block(char* bp);
 int get_seg_list_num(size_t size);
 
 static char *heap_listp;
+//∫–∏Æ ∞°øÎ ∏ÆΩ∫∆Æ ª˝º∫
 void* seg_list[LIST_NUM];
 
 int mm_init(void)
 {   
+    //∞¢ ∫–∏Æ ∞°øÎ ∏ÆΩ∫∆Æ∏¶ NULL∑Œ √ ±‚»≠«ÿ¡ÿ¥Ÿ.
     for (int i = 0; i < LIST_NUM; i ++){
         seg_list[i] = NULL;
     }
@@ -190,12 +184,25 @@ void *mm_realloc(void *ptr, size_t size)
 static void *find_fit(size_t asize)
 {  
     void *search_p;
+    //asize∞° µÈæÓ∞• ºˆ ¿÷¥¬ seg_list √£±‚
     int i = get_seg_list_num(asize);
+    
+    //∏ÆΩ∫∆Æ ≥ª∫Œ¿« ∫Ì∑œµÈ ¡ﬂ ∞°¿Â ¿€¿∫ ∫Ì∑œ «“¥Á(best-fit)
+    void *tmp = NULL;
     while (i < LIST_NUM){
         for (search_p = seg_list[i]; search_p != NULL; search_p = GET(SUCC(search_p))){
             if (GET_SIZE(HDRP(search_p)) >= asize){
-                return search_p;
+                if (tmp == NULL){
+                    tmp = search_p;
+                } else {
+                    if (GET_SIZE(tmp) > GET_SIZE(HDRP(search_p))){
+                        tmp = search_p;
+                    }
+                }
             }
+        }
+        if (tmp != NULL){
+            return tmp;
         }
         i ++;
     }
@@ -225,7 +232,6 @@ static void place(void *bp, size_t asize)
 void delete_block(char* bp){ 
     int seg_list_num = get_seg_list_num(GET_SIZE(HDRP(bp)));
 
-
     if (GET(PRED(bp)) == NULL){
         if (GET(SUCC(bp)) == NULL){
             seg_list[seg_list_num] = NULL;
@@ -245,6 +251,7 @@ void delete_block(char* bp){
 }
 
 void add_free_block(char* bp){
+    //µÈæÓ∞°æﬂ «œ¥¬ seg_list √£∞Ì ±◊ seg_listø° √ﬂ∞°
     int seg_list_num = get_seg_list_num(GET_SIZE(HDRP(bp)));
     if (seg_list[seg_list_num] == NULL){
         PUT(PRED(bp), NULL);
@@ -258,7 +265,7 @@ void add_free_block(char* bp){
 }
 
 int get_seg_list_num(size_t size){
-    //seg_list[0]ÏùÄ Î∏îÎ°ùÏùò ÏµúÏÜå ÌÅ¨Í∏∞Ïù∏ 2**4Î•º ÏúÑÌïú Î¶¨Ïä§Ìä∏ 
+    //seg_list[0]¿∫ ∫Ì∑œ¿« √÷º“ ≈©±‚¿Œ 2**4∏¶ ¿ß«— ∏ÆΩ∫∆Æ 
     int i = -4;
     while (size != 1){
         size = (size >> 1);
